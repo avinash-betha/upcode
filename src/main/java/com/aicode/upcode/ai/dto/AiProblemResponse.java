@@ -18,3 +18,4 @@ public class AiProblemResponse {
     private String referenceSolution;
     private List<String> testInputs;
 }
+

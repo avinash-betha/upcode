@@ -1,5 +1,6 @@
 package com.aicode.upcode.service;
 
+import com.aicode.upcode.ai.AiService;
 import com.aicode.upcode.domain.Problem;
 import com.aicode.upcode.repository.ProblemRepository;
 import lombok.RequiredArgsConstructor;

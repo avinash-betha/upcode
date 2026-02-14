@@ -22,9 +22,10 @@ public class LocalAiClient implements AiClient {
         String url = "http://localhost:11434/api/generate";
 
         Map<String, Object> requestBody = Map.of(
-                "model", "deepseek-coder",
+                "model", "mistral:latest",
                 "prompt", prompt,
-                "stream", false
+                "stream", false,
+                "temperature", 0.1
         );
 
         HttpHeaders headers = new HttpHeaders();

@@ -14,7 +14,7 @@ public class AiService {
     private final ObjectMapper objectMapper;
 
     // =====================================================
-    // 1️⃣ Generate Raw Problem (Text)
+    // 1️⃣ Generate Raw Problem (Text Only)
     // =====================================================
     public String generateProblem(String topic, String difficulty) {
 
@@ -24,19 +24,26 @@ public class AiService {
     }
 
     // =====================================================
-    // 2️⃣ Generate + Parse JSON Problem (V1 Preferred)
+    // 2️⃣ Generate + Parse Problem Into Structured DTO
     // =====================================================
     public AiProblemResponse generateAndParseProblem(String topic,
                                                      String difficulty) {
 
         try {
 
-            String raw = generateProblem(topic, difficulty);
+            String rawResponse = generateProblem(topic, difficulty);
 
-            // Clean possible markdown wrapping from AI
-            raw = cleanJson(raw);
+            System.out.println("========== RAW AI RESPONSE ==========");
+            System.out.println(rawResponse);
+            System.out.println("=====================================");
 
-            return objectMapper.readValue(raw, AiProblemResponse.class);
+            // Extract only JSON block
+            String json = extractJson(rawResponse);
+
+            // Sanitize malformed JSON
+            json = sanitizeJson(json);
+
+            return objectMapper.readValue(json, AiProblemResponse.class);
 
         } catch (Exception e) {
             throw new RuntimeException("Failed to parse AI JSON response", e);
@@ -44,7 +51,7 @@ public class AiService {
     }
 
     // =====================================================
-    // 3️⃣ Code Review
+    // 3️⃣ Code Review (Approach Analysis)
     // =====================================================
     public String reviewCode(String problemDescription,
                              String userCode) {
@@ -86,7 +93,7 @@ public class AiService {
     }
 
     // =====================================================
-    // 5️⃣ Similarity Detection
+    // 5️⃣ Code Similarity Check
     // =====================================================
     public String checkSimilarity(String codeA, String codeB) {
 
@@ -107,20 +114,40 @@ public class AiService {
     }
 
     // =====================================================
-    // Utility: Clean JSON if AI wraps with ```json
+    // 🔐 JSON EXTRACTION (Important for LLM Stability)
     // =====================================================
-    private String cleanJson(String raw) {
+    private String extractJson(String raw) {
 
         if (raw == null) return "";
 
-        raw = raw.trim();
+        int start = raw.indexOf("{");
+        int end = raw.lastIndexOf("}");
 
-        if (raw.startsWith("```")) {
-            raw = raw.replace("```json", "")
-                    .replace("```", "")
-                    .trim();
+        if (start >= 0 && end > start) {
+            return raw.substring(start, end + 1);
         }
 
         return raw;
+    }
+
+    // =====================================================
+    // 🛡 JSON SANITIZER (Fix common LLM formatting issues)
+    // =====================================================
+    private String sanitizeJson(String raw) {
+
+        if (raw == null) return "";
+
+        // Remove markdown formatting
+        raw = raw.replace("```json", "")
+                .replace("```", "");
+
+        // Remove bullet dashes inside arrays
+        raw = raw.replace("\n-", "\n");
+
+        // Remove trailing commas
+        raw = raw.replaceAll(",\\s*}", "}")
+                .replaceAll(",\\s*]", "]");
+
+        return raw.trim();
     }
 }
